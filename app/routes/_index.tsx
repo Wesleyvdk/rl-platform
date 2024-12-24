@@ -1,4 +1,3 @@
-import { json, LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData, useFetcher } from "@remix-run/react";
 import { useState, useEffect } from "react";
 import { Button } from "~/components/ui/button";
@@ -10,10 +9,16 @@ import { MatchCard } from "~/components/match-card";
 import { createMatchFromQueue } from "~/services/match-maker.server";
 import { useToast } from "~/contexts/toast-context";
 import { Layout } from "~/components/layout";
+import { LoaderFunctionArgs } from "@remix-run/node";
+
+interface FetcherData {
+  success: boolean;
+  message: string;
+}
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await getSession();
-
+  const websocket = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:3001";
   const queue = await prisma.queue.findFirst({
     where: { status: "waiting" },
     include: { players: true },
@@ -35,13 +40,14 @@ export async function loader({ request }: LoaderFunctionArgs) {
     orderBy: { mmr: "desc" },
   });
 
-  return json({
+  return Response.json({
     user,
     queue,
     match: activeMatch,
     totalMatches,
     totalPlayers,
     topPlayer,
+    websocket,
   });
 }
 
@@ -53,19 +59,16 @@ export default function Index() {
     totalMatches,
     totalPlayers,
     topPlayer,
+    websocket,
   } = useLoaderData<typeof loader>();
   const [queue, setQueue] = useState(initialQueue);
   const [match, setMatch] = useState(initialMatch);
   const fetcher = useFetcher();
-  const { sendMessage } = useWebSocket(
-    process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:3001"
-  );
+  const { sendMessage } = useWebSocket(websocket);
   const { addToast } = useToast();
 
   useEffect(() => {
-    const ws = new WebSocket(
-      process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:3001"
-    );
+    const ws = new WebSocket(websocket);
 
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
@@ -94,17 +97,28 @@ export default function Index() {
   };
 
   useEffect(() => {
-    if (fetcher.data) {
-      if (fetcher.data) {
-        addToast({
-          title: "Success",
-          description: `${fetcher.data}`,
-          variant: "default",
-        });
+    const data = fetcher.data as FetcherData;
+    if (data) {
+      if (data.success !== undefined) {
+        if (data.success) {
+          addToast({
+            title: "Success",
+            description: data.message || "Action completed successfully",
+            variant: "default",
+          });
+        } else {
+          addToast({
+            title: "Error",
+            description: data.message || "An error occurred",
+            variant: "destructive",
+          });
+        }
       } else {
+        // Handle the case where the response doesn't have a success property
+        console.error("Unexpected response format:", fetcher.data);
         addToast({
           title: "Error",
-          description: `${fetcher.data}`,
+          description: "An unexpected error occurred",
           variant: "destructive",
         });
       }

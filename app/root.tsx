@@ -10,6 +10,7 @@ import {
 } from "@remix-run/react";
 import { ToastProvider } from "~/contexts/toast-context";
 import { authenticator } from "~/auth.server";
+import "./tailwind.css";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await authenticator.isAuthenticated(request);
