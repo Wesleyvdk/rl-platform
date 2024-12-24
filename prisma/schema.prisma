@@ -1,0 +1,42 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id         String   @id @default(cuid())
+  username   String   @unique
+  platformId String   @unique
+  mmr        Int     @default(1000)
+  wins       Int     @default(0)
+  losses     Int     @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  queues     Queue[]
+  matches    Match[]
+}
+
+model Queue {
+  id        String   @id @default(cuid())
+  status    String   @default("waiting")
+  players   User[]
+  match     Match?   @relation(fields: [matchId], references: [id])
+  matchId   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Match {
+  id          String    @id @default(cuid())
+  blueTeam    User[]    @relation("BlueTeam")
+  orangeTeam  User[]    @relation("OrangeTeam")
+  winner      String?
+  queue       Queue[]
+  createdAt   DateTime  @default(now())
+  completedAt DateTime?
+}
+
