@@ -18,7 +18,12 @@ export async function loader({ request }: LoaderFunctionArgs) {
     },
   });
 
-  return Response.json({ user, matches });
+  return new Response(JSON.stringify({ user, matches }), {
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+  //return Response.json({ user, matches });
 }
 
 export default function Matches() {

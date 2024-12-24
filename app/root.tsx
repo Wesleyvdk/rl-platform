@@ -1,4 +1,5 @@
-import { json, LoaderFunctionArgs } from "@remix-run/node";
+import { LoaderFunctionArgs } from "@remix-run/node";
+
 import {
   Links,
   LiveReload,
@@ -15,7 +16,12 @@ import { ToastProvider } from "./components/ui/toast";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await authenticator.isAuthenticated(request);
-  return Response.json({ user });
+  return new Response(JSON.stringify({ user }), {
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+  // return Response.json({ user });
 }
 
 export default function App() {

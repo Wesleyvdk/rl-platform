@@ -38,7 +38,13 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
   const winRate = (player.wins / (player.wins + player.losses)) * 100 || 0;
 
-  return Response.json({ currentUser, player, winRate });
+  return new Response(JSON.stringify({ currentUser, player, winRate }), {
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  //return Response.json({ currentUser, player, winRate });
 }
 
 export default function PlayerProfile() {

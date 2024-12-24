@@ -27,7 +27,12 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   if (queue && queue.players.length === 6) {
     const match = await createMatchFromQueue(queue.id);
-    return Response.json({ user, queue: null, match });
+    return new Response(JSON.stringify({ user, queue: null, match }), {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    //return Response.json({ user, queue: null, match });
   }
 
   const activeMatch = await prisma.match.findFirst({
@@ -41,15 +46,31 @@ export async function loader({ request }: LoaderFunctionArgs) {
     orderBy: { mmr: "desc" },
   });
 
-  return Response.json({
-    user,
-    queue,
-    match: activeMatch,
-    totalMatches,
-    totalPlayers,
-    topPlayer,
-    websocket,
-  });
+  return new Response(
+    JSON.stringify({
+      user,
+      queue,
+      match: activeMatch,
+      totalMatches,
+      totalPlayers,
+      topPlayer,
+      websocket,
+    }),
+    {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  );
+  // return Response.json({
+  //   user,
+  //   queue,
+  //   match: activeMatch,
+  //   totalMatches,
+  //   totalPlayers,
+  //   topPlayer,
+  //   websocket,
+  // });
 }
 
 export default function Index() {

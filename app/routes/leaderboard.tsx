@@ -20,8 +20,12 @@ export async function loader({ request }: LoaderFunctionArgs) {
     orderBy: { mmr: "desc" },
     take: 100,
   });
-
-  return Response.json({ user, players });
+  return new Response(JSON.stringify({ user, players }), {
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+  // return Response.json({ user, players });
 }
 
 export default function Leaderboard() {
