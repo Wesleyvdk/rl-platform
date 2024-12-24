@@ -1,23 +1,27 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-generator client {
-  provider = "prisma-client-js"
-}
-
 model User {
-  id         String   @id @default(cuid())
-  username   String   @unique
-  platformId String   @unique
-  mmr        Int     @default(1000)
-  wins       Int     @default(0)
-  losses     Int     @default(0)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  queues     Queue[]
-  matches    Match[]
+  id            String   @id @default(cuid())
+  username      String   @unique
+  platformId    String   @unique
+  discordId     String   @unique
+  discordAvatar String?
+  mmr           Int      @default(1000)
+  wins          Int      @default(0)
+  losses        Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  queues        Queue[]
+  matches       Match[]  @relation("UserMatches")
+  blueMatches   Match[]  @relation("BlueTeam")
+  orangeMatches Match[]  @relation("OrangeTeam")
 }
 
 model Queue {
@@ -36,7 +40,7 @@ model Match {
   orangeTeam  User[]    @relation("OrangeTeam")
   winner      String?
   queue       Queue[]
+  users       User[]    @relation("UserMatches")
   createdAt   DateTime  @default(now())
   completedAt DateTime?
 }
-

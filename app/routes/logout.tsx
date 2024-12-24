@@ -1,8 +1,8 @@
 import { ActionFunctionArgs, redirect } from "@remix-run/node";
-import { logout } from "~/utils/session.server";
+import { authenticator } from "~/auth.server";
 
 export async function action({ request }: ActionFunctionArgs) {
-  return logout(request);
+  await authenticator.logout(request, { redirectTo: "/login" });
 }
 
 export async function loader() {

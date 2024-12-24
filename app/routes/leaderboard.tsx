@@ -1,6 +1,6 @@
 import { json, LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData, Link } from "@remix-run/react";
-import { requireUser } from "~/utils/session.server";
+import { getSession } from "~/utils/session.server";
 import { prisma } from "~/lib/prisma.server";
 import { Layout } from "~/components/layout";
 import {
@@ -13,14 +13,14 @@ import {
 } from "~/components/ui/table";
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  const user = await requireUser(request);
+  const user = await getSession();
 
   const players = await prisma.user.findMany({
     orderBy: { mmr: "desc" },
     take: 100,
   });
 
-  return json({ user, players });
+  return Response.json({ user, players });
 }
 
 export default function Leaderboard() {

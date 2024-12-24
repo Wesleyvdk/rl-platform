@@ -1,12 +1,12 @@
 import { json, LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
-import { requireUser } from "~/utils/session.server";
+import { getSession } from "~/utils/session.server";
 import { prisma } from "~/lib/prisma.server";
 import { Layout } from "~/components/layout";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  const user = await requireUser(request);
+  const user = await getSession();
 
   const matches = await prisma.match.findMany({
     orderBy: { createdAt: "desc" },
@@ -17,7 +17,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     },
   });
 
-  return json({ user, matches });
+  return Response.json({ user, matches });
 }
 
 export default function Matches() {

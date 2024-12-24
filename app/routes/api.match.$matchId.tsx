@@ -1,9 +1,9 @@
 import { ActionFunctionArgs, json } from "@remix-run/node";
 import { prisma } from "~/lib/prisma.server";
-import { requireUser } from "~/utils/session.server";
+import { getSession } from "~/utils/session.server";
 
 export async function action({ request, params }: ActionFunctionArgs) {
-  await requireUser(request);
+  await getSession();
   const { matchId } = params;
 
   if (request.method !== "POST") {

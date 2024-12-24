@@ -1,6 +1,6 @@
 import { json, LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
-import { requireUser } from "~/utils/session.server";
+import { getSession } from "~/utils/session.server";
 import { prisma } from "~/lib/prisma.server";
 import { Layout } from "~/components/layout";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
@@ -14,7 +14,7 @@ import {
 } from "~/components/ui/table";
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
-  const currentUser = await requireUser(request);
+  const currentUser = await getSession();
   const { playerId } = params;
 
   const player = await prisma.user.findUnique({
@@ -37,7 +37,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
   const winRate = (player.wins / (player.wins + player.losses)) * 100 || 0;
 
-  return json({ currentUser, player, winRate });
+  return Response.json({ currentUser, player, winRate });
 }
 
 export default function PlayerProfile() {

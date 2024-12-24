@@ -1,11 +1,11 @@
 import { ActionFunctionArgs, json, LoaderFunctionArgs } from "@remix-run/node";
 import { prisma } from "~/lib/prisma.server";
-import { requireUser } from "~/utils/session.server";
+import { getSession } from "~/utils/session.server";
 import { broadcastQueueUpdate } from "~/services/ws.server";
 
 export async function action({ request }: ActionFunctionArgs) {
   try {
-    const user = await requireUser(request);
+    const user = await getSession();
 
     switch (request.method) {
       case "POST": {
@@ -88,7 +88,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
 export async function loader({ request }: LoaderFunctionArgs) {
   try {
-    await requireUser(request);
+    await getSession();
 
     const queue = await prisma.queue.findFirst({
       where: { status: "waiting" },

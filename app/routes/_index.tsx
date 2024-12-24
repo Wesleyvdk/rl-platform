@@ -3,7 +3,7 @@ import { useLoaderData, useFetcher } from "@remix-run/react";
 import { useState, useEffect } from "react";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { requireUser } from "~/utils/session.server";
+import { getSession } from "~/utils/session.server";
 import { prisma } from "~/lib/prisma.server";
 import { useWebSocket } from "~/hooks/use-websocket";
 import { MatchCard } from "~/components/match-card";
@@ -12,7 +12,7 @@ import { useToast } from "~/contexts/toast-context";
 import { Layout } from "~/components/layout";
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  const user = await requireUser(request);
+  const user = await getSession();
 
   const queue = await prisma.queue.findFirst({
     where: { status: "waiting" },
@@ -21,7 +21,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   if (queue && queue.players.length === 6) {
     const match = await createMatchFromQueue(queue.id);
-    return json({ user, queue: null, match });
+    return Response.json({ user, queue: null, match });
   }
 
   const activeMatch = await prisma.match.findFirst({
@@ -35,7 +35,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     orderBy: { mmr: "desc" },
   });
 
-  return Response.json({
+  return json({
     user,
     queue,
     match: activeMatch,
@@ -58,13 +58,13 @@ export default function Index() {
   const [match, setMatch] = useState(initialMatch);
   const fetcher = useFetcher();
   const { sendMessage } = useWebSocket(
-    process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:3000"
+    process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:3001"
   );
   const { addToast } = useToast();
 
   useEffect(() => {
     const ws = new WebSocket(
-      process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:3000"
+      process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:3001"
     );
 
     ws.onmessage = (event) => {
@@ -104,7 +104,7 @@ export default function Index() {
       } else {
         addToast({
           title: "Error",
-          description: fetcher.data,
+          description: `${fetcher.data}`,
           variant: "destructive",
         });
       }

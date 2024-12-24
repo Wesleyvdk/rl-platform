@@ -1,9 +1,10 @@
 import { Link } from "@remix-run/react";
 import { Button } from "~/components/ui/button";
+import { DiscordUser } from "../auth.server";
 
 interface LayoutProps {
   children: React.ReactNode;
-  user: { username: string; mmr: number } | null;
+  user: DiscordUser | null;
 }
 
 export function Layout({ children, user }: LayoutProps) {
@@ -26,7 +27,7 @@ export function Layout({ children, user }: LayoutProps) {
             </Link>
             {user ? (
               <span className="text-sm">
-                {user.username} (MMR: {user.mmr})
+                {user.displayName} (MMR: 0)
                 <form action="/logout" method="post" className="inline ml-4">
                   <Button variant="outline" size="sm" type="submit">
                     Logout

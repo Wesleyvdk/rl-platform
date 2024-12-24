@@ -8,22 +8,12 @@ import {
   ScrollRestoration,
   useLoaderData,
 } from "@remix-run/react";
-import { getUserSession } from "~/utils/session.server";
-import { prisma } from "~/lib/prisma.server";
 import { ToastProvider } from "~/contexts/toast-context";
+import { authenticator } from "~/auth.server";
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  const { userId } = await getUserSession(request);
-  let user = null;
-
-  if (userId) {
-    user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { id: true, username: true, mmr: true },
-    });
-  }
-
-  return json({ user });
+  const user = await authenticator.isAuthenticated(request);
+  return Response.json({ user });
 }
 
 export default function App() {
@@ -38,7 +28,7 @@ export default function App() {
       <body>
         <ToastProvider>
           <div className="min-h-screen bg-background">
-            <Outlet />
+            <Outlet context={{ user }} />
           </div>
         </ToastProvider>
         <ScrollRestoration />
