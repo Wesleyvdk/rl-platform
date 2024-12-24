@@ -4,9 +4,10 @@ import { getSession } from "~/utils/session.server";
 import { prisma } from "~/lib/prisma.server";
 import { Layout } from "~/components/layout";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import { authenticator } from "~/auth.server";
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  const user = await getSession();
+  const user = await authenticator.isAuthenticated(request);
 
   const matches = await prisma.match.findMany({
     orderBy: { createdAt: "desc" },

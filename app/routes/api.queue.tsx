@@ -187,7 +187,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
 export async function loader({ request }: LoaderFunctionArgs) {
   try {
-    const user = await getSession();
+    const user = await authenticator.isAuthenticated(request);
 
     if (!user) {
       return new Response(

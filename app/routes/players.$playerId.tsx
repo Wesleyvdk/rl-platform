@@ -12,9 +12,10 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
+import { authenticator } from "~/auth.server";
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
-  const currentUser = await getSession();
+  const currentUser = await authenticator.isAuthenticated(request);
   const { playerId } = params;
 
   const player = await prisma.user.findUnique({

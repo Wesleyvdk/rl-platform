@@ -5,7 +5,7 @@ import { Toaster } from "./ui/toaster";
 
 interface LayoutProps {
   children: React.ReactNode;
-  user: DiscordUser | null;
+  user: any;
 }
 
 export function Layout({ children, user }: LayoutProps) {
@@ -28,7 +28,7 @@ export function Layout({ children, user }: LayoutProps) {
             </Link>
             {user ? (
               <span className="text-sm">
-                {user.displayName} (MMR: 1000)
+                {user.displayName} (MMR: {user.mmr})
                 <form action="/logout" method="post" className="inline ml-4">
                   <Button variant="outline" size="sm" type="submit">
                     Logout

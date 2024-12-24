@@ -11,9 +11,10 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
+import { authenticator } from "~/auth.server";
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  const user = await getSession();
+  const user = await authenticator.isAuthenticated(request);
 
   const players = await prisma.user.findMany({
     orderBy: { mmr: "desc" },
