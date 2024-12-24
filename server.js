@@ -1,5 +1,6 @@
 import { createRequestHandler } from "@remix-run/express";
 import express from "express";
+import { WebSocketServer } from "ws";
 
 const viteDevServer =
   process.env.NODE_ENV === "production"
@@ -19,8 +20,39 @@ const build = viteDevServer
   ? () => viteDevServer.ssrLoadModule("virtual:remix/server-build")
   : await import("./build/server/index.js");
 
-app.all("*", createRequestHandler({ build }));
+app.all("*", (req, res, next) => {
+  if (req.headers.upgrade === "websocket") {
+    // Ignore WebSocket requests
+    return next();
+  }
+  createRequestHandler({ build })(req, res, next);
+});
 
-app.listen(3000, () => {
+const server = app.listen(3000, () => {
   console.log("App listening on http://localhost:3000");
+});
+
+const wss = new WebSocketServer({ server });
+
+// WebSocket connection handler
+wss.on("connection", (ws) => {
+  console.log("WebSocket connection established!");
+
+  // Handle incoming messages
+  ws.on("message", (message) => {
+    console.log(`Received: ${message}`);
+    ws.send(`Echo: ${message}`);
+  });
+
+  // Handle errors
+  ws.on("error", (error) => {
+    console.error("WebSocket error:", error);
+  });
+
+  // Handle WebSocket close event
+  ws.on("close", (code, reason) => {
+    console.log(
+      `WebSocket connection closed! Code: ${code}, Reason: ${reason}`
+    );
+  });
 });

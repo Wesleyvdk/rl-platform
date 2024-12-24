@@ -7,8 +7,30 @@ export async function action({ request }: ActionFunctionArgs) {
   try {
     const user = await getSession();
 
+    if (!user) {
+      return new Response(
+        JSON.stringify({ success: false, message: "Unauthorized" }),
+        { status: 401 }
+      );
+    }
+
     switch (request.method) {
       case "POST": {
+        // Check if the user exists in the database
+        const userExists = await prisma.user.findUnique({
+          where: { id: user.id },
+        });
+
+        if (!userExists) {
+          return new Response(
+            JSON.stringify({
+              success: false,
+              message: "User does not exist in the database",
+            }),
+            { status: 400 }
+          );
+        }
+
         // Check if user is already in a queue
         const existingQueue = await prisma.queue.findFirst({
           where: {
@@ -18,13 +40,16 @@ export async function action({ request }: ActionFunctionArgs) {
         });
 
         if (existingQueue) {
-          return Response.json(
-            { success: false, message: "You are already in a queue" },
+          return new Response(
+            JSON.stringify({
+              success: false,
+              message: "You are already in a queue",
+            }),
             { status: 400 }
           );
         }
 
-        // Join queue
+        // Join queue if a waiting queue exists
         const queue = await prisma.queue.findFirst({
           where: { status: "waiting" },
           include: { players: true },
@@ -40,26 +65,62 @@ export async function action({ request }: ActionFunctionArgs) {
           });
 
           await broadcastQueueUpdate();
-          return Response.json({
-            success: true,
-            message: "Joined queue successfully",
-          });
+          return new Response(
+            JSON.stringify({
+              success: true,
+              message: "Joined queue successfully",
+              queue: updatedQueue,
+            }),
+            { status: 200 }
+          );
         }
 
-        // Create new queue if none exists
-        const newQueue = await prisma.queue.create({
-          data: {
-            status: "waiting",
-            players: { connect: { id: user.id } },
-          },
-          include: { players: true },
-        });
+        // Create a new queue
+        try {
+          const newQueue = await prisma.queue.create({
+            data: {
+              status: "waiting",
+              players: {
+                connect: [{ id: user.id }],
+              },
+            },
+            include: { players: true },
+          });
 
-        await broadcastQueueUpdate();
-        return Response.json({
-          success: true,
-          message: "Created new queue and joined successfully",
-        });
+          console.log("Created new queue:", newQueue);
+          await broadcastQueueUpdate();
+          return new Response(
+            JSON.stringify({
+              success: true,
+              message: "Created new queue and joined successfully",
+              queue: newQueue,
+            }),
+            { status: 201 }
+          );
+        } catch (error) {
+          console.error("Queue creation error:", error);
+
+          // Handle specific Prisma P2025 error (related records not found)
+          if (error instanceof prisma.PrismaClientKnownRequestError) {
+            return new Response(
+              JSON.stringify({
+                success: false,
+                message:
+                  "Queue creation failed. Related records were not found.",
+              }),
+              { status: 400 }
+            );
+          }
+
+          return new Response(
+            JSON.stringify({
+              success: false,
+              message: "Failed to create queue",
+              error: error instanceof Error ? error.message : "Unknown error",
+            }),
+            { status: 500 }
+          );
+        }
       }
 
       case "DELETE": {
@@ -72,8 +133,11 @@ export async function action({ request }: ActionFunctionArgs) {
         });
 
         if (!queue) {
-          return Response.json(
-            { success: false, message: "Not in queue" },
+          return new Response(
+            JSON.stringify({
+              success: false,
+              message: "Not in queue",
+            }),
             { status: 404 }
           );
         }
@@ -87,22 +151,34 @@ export async function action({ request }: ActionFunctionArgs) {
         });
 
         await broadcastQueueUpdate();
-        return Response.json({
-          success: true,
-          message: "Left queue successfully",
-        });
+        return new Response(
+          JSON.stringify({
+            success: true,
+            message: "Left queue successfully",
+            queue: updatedQueue,
+          }),
+          { status: 200 }
+        );
       }
 
       default:
-        return Response.json(
-          { success: false, message: "Method not allowed" },
+        return new Response(
+          JSON.stringify({
+            success: false,
+            message: "Method not allowed",
+          }),
           { status: 405 }
         );
     }
   } catch (error) {
     console.error("Queue action error:", error);
-    return Response.json(
-      { success: false, message: "An unexpected error occurred" },
+
+    return new Response(
+      JSON.stringify({
+        success: false,
+        message: "An unexpected error occurred",
+        error: error instanceof Error ? error.message : "Unknown error",
+      }),
       { status: 500 }
     );
   }
@@ -110,18 +186,36 @@ export async function action({ request }: ActionFunctionArgs) {
 
 export async function loader({ request }: LoaderFunctionArgs) {
   try {
-    await getSession();
+    const user = await getSession();
+
+    if (!user) {
+      return new Response(
+        JSON.stringify({ success: false, message: "Unauthorized" }),
+        { status: 401 }
+      );
+    }
 
     const queue = await prisma.queue.findFirst({
       where: { status: "waiting" },
       include: { players: true },
     });
 
-    return Response.json({ success: true, queue });
+    return new Response(
+      JSON.stringify({
+        success: true,
+        queue,
+      }),
+      { status: 200 }
+    );
   } catch (error) {
     console.error("Queue loader error:", error);
-    return Response.json(
-      { success: false, message: "An unexpected error occurred" },
+
+    return new Response(
+      JSON.stringify({
+        success: false,
+        message: "An unexpected error occurred",
+        error: error instanceof Error ? error.message : "Unknown error",
+      }),
       { status: 500 }
     );
   }

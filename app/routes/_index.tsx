@@ -18,7 +18,7 @@ interface FetcherData {
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await getSession();
-  const websocket = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:3001";
+  const websocket = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:3000";
   const queue = await prisma.queue.findFirst({
     where: { status: "waiting" },
     include: { players: true },
