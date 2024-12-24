@@ -2,10 +2,11 @@ import { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { prisma } from "~/lib/prisma.server";
 import { getSession } from "~/utils/session.server";
 import { broadcastQueueUpdate } from "~/services/ws.server";
+import { authenticator } from "~/auth.server";
 
 export async function action({ request }: ActionFunctionArgs) {
   try {
-    const user = await getSession();
+    const user = await authenticator.isAuthenticated(request);
 
     if (!user) {
       return new Response(

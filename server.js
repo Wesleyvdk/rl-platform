@@ -27,7 +27,6 @@ app.all("*", (req, res, next) => {
   }
   createRequestHandler({ build })(req, res, next);
 });
-
 const server = app.listen(3000, () => {
   console.log("App listening on http://localhost:3000");
 });

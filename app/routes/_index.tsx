@@ -7,9 +7,10 @@ import { prisma } from "~/lib/prisma.server";
 import { useWebSocket } from "~/hooks/use-websocket";
 import { MatchCard } from "~/components/match-card";
 import { createMatchFromQueue } from "~/services/match-maker.server";
-import { useToast } from "~/contexts/toast-context";
+import { useToast } from "~/hooks/use-toast";
 import { Layout } from "~/components/layout";
 import { LoaderFunctionArgs } from "@remix-run/node";
+import { authenticator } from "~/auth.server";
 
 interface FetcherData {
   success: boolean;
@@ -17,7 +18,7 @@ interface FetcherData {
 }
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  const user = await getSession();
+  const user = await authenticator.isAuthenticated(request, {});
   const websocket = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:3000";
   const queue = await prisma.queue.findFirst({
     where: { status: "waiting" },
@@ -64,8 +65,8 @@ export default function Index() {
   const [queue, setQueue] = useState(initialQueue);
   const [match, setMatch] = useState(initialMatch);
   const fetcher = useFetcher();
-  const { sendMessage } = useWebSocket(websocket);
-  const { addToast } = useToast();
+  const { sendMessage } = useWebSocket();
+  const { toast } = useToast();
 
   useEffect(() => {
     const ws = new WebSocket(websocket);
@@ -97,17 +98,24 @@ export default function Index() {
   };
 
   useEffect(() => {
-    const data = fetcher.data as FetcherData;
+    let data = fetcher.data as FetcherData;
     if (data) {
-      if (data.success !== undefined) {
+      if (typeof data === "string") {
+        data = JSON.parse(data);
+      }
+      console.log(data);
+      console.log(data.message);
+      if (data.success != undefined) {
         if (data.success) {
-          addToast({
+          toast({
             title: "Success",
             description: data.message || "Action completed successfully",
             variant: "default",
           });
+          window.location.reload();
         } else {
-          addToast({
+          console.error(data.message);
+          toast({
             title: "Error",
             description: data.message || "An error occurred",
             variant: "destructive",
@@ -116,14 +124,14 @@ export default function Index() {
       } else {
         // Handle the case where the response doesn't have a success property
         console.error("Unexpected response format:", fetcher.data);
-        addToast({
+        toast({
           title: "Error",
           description: "An unexpected error occurred",
           variant: "destructive",
         });
       }
     }
-  }, [fetcher.data, addToast]);
+  }, [fetcher.data]);
 
   return (
     <Layout user={user}>

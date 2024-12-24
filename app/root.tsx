@@ -8,9 +8,10 @@ import {
   ScrollRestoration,
   useLoaderData,
 } from "@remix-run/react";
-import { ToastProvider } from "~/contexts/toast-context";
+
 import { authenticator } from "~/auth.server";
 import "./tailwind.css";
+import { ToastProvider } from "./components/ui/toast";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await authenticator.isAuthenticated(request);
@@ -34,7 +35,6 @@ export default function App() {
         </ToastProvider>
         <ScrollRestoration />
         <Scripts />
-        <LiveReload />
       </body>
     </html>
   );

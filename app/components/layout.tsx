@@ -1,6 +1,7 @@
 import { Link } from "@remix-run/react";
 import { Button } from "~/components/ui/button";
 import { DiscordUser } from "../auth.server";
+import { Toaster } from "./ui/toaster";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -27,7 +28,7 @@ export function Layout({ children, user }: LayoutProps) {
             </Link>
             {user ? (
               <span className="text-sm">
-                {user.displayName} (MMR: 0)
+                {user.displayName} (MMR: 1000)
                 <form action="/logout" method="post" className="inline ml-4">
                   <Button variant="outline" size="sm" type="submit">
                     Logout
@@ -43,9 +44,10 @@ export function Layout({ children, user }: LayoutProps) {
         </div>
       </header>
       <main className="flex-grow container mx-auto py-8">{children}</main>
+      <Toaster />
       <footer className="bg-gray-800 text-white p-4">
         <div className="container mx-auto text-center">
-          &copy; 2023 6mans Platform. All rights reserved.
+          &copy; 2024 6mans Platform. All rights reserved.
         </div>
       </footer>
     </div>
